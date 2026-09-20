@@ -1,0 +1,52 @@
+const express = require("express");
+const pool = require("../db/db");
+
+const router = express.Router();
+
+router.get("/", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM fish_species ORDER BY name ASC"
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch fish species"
+    });
+  }
+});
+
+router.post("/", async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        status: "error",
+        message: "Species name is required"
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO fish_species (name)
+       VALUES ($1)
+       RETURNING *`,
+      [name]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      status: "error",
+      message: "Failed to create fish species"
+    });
+  }
+});
+
+module.exports = router;
