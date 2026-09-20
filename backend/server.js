@@ -1,10 +1,13 @@
 require("dotenv").config();
-
+7777
 const express = require("express");
 const cors = require("cors");
 const pool = require("./src/db/db");
 const locationRoutes = require("./src/routes/locationRoutes");
 const speciesRoutes = require("./src/routes/speciesRoutes");
+const lureRoutes = require("./src/routes/lureRoutes");
+const tripRoutes = require("./src/routes/tripRoutes");
+const catchRoutes = require("./src/routes/catchRoutes");
 
 const app = express();
 
@@ -12,6 +15,9 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/locations", locationRoutes);
 app.use("/api/species", speciesRoutes);
+app.use("/api/lures", lureRoutes);
+app.use("/api/trips", tripRoutes);
+app.use("/api/catches", catchRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
