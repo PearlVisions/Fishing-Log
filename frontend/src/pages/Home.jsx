@@ -1,11 +1,30 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { clearToken } from "../services/api";
 
 function Home() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    clearToken();
+    navigate("/");
+  }
+
   return (
-    <section>
-      <div className="page-heading">
-        <h2>Fishing Log</h2>
-        <p>Fishing trips, catches, locations and equipment.</p>
+    <section className="page">
+      <div className="home-heading">
+        <div>
+          <h2>Fishing Log</h2>
+          <p>
+            Fishing trips, catches, locations and equipment.
+          </p>
+        </div>
+
+        <button
+          className="logout-button"
+          onClick={handleLogout}
+        >
+          Log out
+        </button>
       </div>
 
       <div className="dashboard-grid">
@@ -31,7 +50,7 @@ function Home() {
 
         <Link className="dashboard-card" to="/species">
           <h3>Fish species</h3>
-          <p>Manage fish species.</p>
+          <p>Browse and manage fish species.</p>
         </Link>
       </div>
     </section>

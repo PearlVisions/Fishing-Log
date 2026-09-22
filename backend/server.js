@@ -8,16 +8,46 @@ const speciesRoutes = require("./src/routes/speciesRoutes");
 const lureRoutes = require("./src/routes/lureRoutes");
 const tripRoutes = require("./src/routes/tripRoutes");
 const catchRoutes = require("./src/routes/catchRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const authMiddleware = require("./src/middleware/authMiddleware");
+
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use("/api/locations", locationRoutes);
-app.use("/api/species", speciesRoutes);
-app.use("/api/lures", lureRoutes);
-app.use("/api/trips", tripRoutes);
-app.use("/api/catches", catchRoutes);
+app.use("/api/auth", authRoutes);
+app.use(
+  "/api/locations",
+  authMiddleware,
+  locationRoutes
+);
+
+app.use(
+  "/api/lures",
+  authMiddleware,
+  lureRoutes
+);
+
+app.use(
+  "/api/trips",
+  authMiddleware,
+  tripRoutes
+);
+
+app.use(
+  "/api/catches",
+  authMiddleware,
+  catchRoutes
+);
+
+app.use(
+  "/api/species",
+  authMiddleware,
+  speciesRoutes
+);
+
+
 
 app.get("/api/health", (req, res) => {
   res.json({

@@ -6,11 +6,13 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT *
-       FROM lures
-       WHERE user_id = $1
-       ORDER BY id DESC`,
-      [1]
+      `
+      SELECT *
+      FROM lures
+      WHERE user_id = $1
+      ORDER BY id DESC
+      `,
+      [req.user.id]
     );
 
     res.json(result.rows);
@@ -35,7 +37,7 @@ router.post("/", async (req, res) => {
       weight_g
     } = req.body;
 
-    if (!name) {
+    if (!name?.trim()) {
       return res.status(400).json({
         status: "error",
         message: "Lure name is required"
@@ -43,16 +45,26 @@ router.post("/", async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO lures
-       (user_id, name, type, manufacturer, color, length_mm, weight_g)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [
-        1,
+      `
+      INSERT INTO lures
+      (
+        user_id,
         name,
-        type || null,
-        manufacturer || null,
-        color || null,
+        type,
+        manufacturer,
+        color,
+        length_mm,
+        weight_g
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+      `,
+      [
+        req.user.id,
+        name.trim(),
+        type?.trim() || null,
+        manufacturer?.trim() || null,
+        color?.trim() || null,
         length_mm || null,
         weight_g || null
       ]
@@ -71,8 +83,6 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-
     const {
       name,
       type,
@@ -82,7 +92,7 @@ router.put("/:id", async (req, res) => {
       weight_g
     } = req.body;
 
-    if (!name) {
+    if (!name?.trim()) {
       return res.status(400).json({
         status: "error",
         message: "Lure name is required"
@@ -90,24 +100,28 @@ router.put("/:id", async (req, res) => {
     }
 
     const result = await pool.query(
-      `UPDATE lures
-       SET name = $1,
-           type = $2,
-           manufacturer = $3,
-           color = $4,
-           length_mm = $5,
-           weight_g = $6
-       WHERE id = $7 AND user_id = $8
-       RETURNING *`,
+      `
+      UPDATE lures
+      SET
+        name = $1,
+        type = $2,
+        manufacturer = $3,
+        color = $4,
+        length_mm = $5,
+        weight_g = $6
+      WHERE id = $7
+      AND user_id = $8
+      RETURNING *
+      `,
       [
-        name,
-        type || null,
-        manufacturer || null,
-        color || null,
+        name.trim(),
+        type?.trim() || null,
+        manufacturer?.trim() || null,
+        color?.trim() || null,
         length_mm || null,
         weight_g || null,
-        id,
-        1
+        req.params.id,
+        req.user.id
       ]
     );
 
@@ -131,13 +145,17 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-
     const result = await pool.query(
-      `DELETE FROM lures
-       WHERE id = $1 AND user_id = $2
-       RETURNING *`,
-      [id, 1]
+      `
+      DELETE FROM lures
+      WHERE id = $1
+      AND user_id = $2
+      RETURNING *
+      `,
+      [
+        req.params.id,
+        req.user.id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -149,7 +167,6 @@ router.delete("/:id", async (req, res) => {
 
     res.json({
       status: "ok",
-      message: "Lure deleted",
       lure: result.rows[0]
     });
   } catch (error) {

@@ -6,8 +6,13 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM locations WHERE user_id = $1 ORDER BY id DESC",
-      [1]
+      `
+      SELECT *
+      FROM locations
+      WHERE user_id = $1
+      ORDER BY id DESC
+      `,
+      [req.user.id]
     );
 
     res.json(result.rows);
@@ -23,9 +28,13 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { waterbody, area_name, notes } = req.body;
+    const {
+      waterbody,
+      area_name,
+      notes
+    } = req.body;
 
-    if (!waterbody) {
+    if (!waterbody?.trim()) {
       return res.status(400).json({
         status: "error",
         message: "Waterbody is required"
@@ -33,10 +42,23 @@ router.post("/", async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO locations (user_id, waterbody, area_name, notes)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [1, waterbody, area_name || null, notes || null]
+      `
+      INSERT INTO locations
+      (
+        user_id,
+        waterbody,
+        area_name,
+        notes
+      )
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+      `,
+      [
+        req.user.id,
+        waterbody.trim(),
+        area_name?.trim() || null,
+        notes?.trim() || null
+      ]
     );
 
     res.status(201).json(result.rows[0]);
@@ -52,10 +74,13 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const { waterbody, area_name, notes } = req.body;
+    const {
+      waterbody,
+      area_name,
+      notes
+    } = req.body;
 
-    if (!waterbody) {
+    if (!waterbody?.trim()) {
       return res.status(400).json({
         status: "error",
         message: "Waterbody is required"
@@ -63,13 +88,23 @@ router.put("/:id", async (req, res) => {
     }
 
     const result = await pool.query(
-      `UPDATE locations
-       SET waterbody = $1,
-           area_name = $2,
-           notes = $3
-       WHERE id = $4 AND user_id = $5
-       RETURNING *`,
-      [waterbody, area_name || null, notes || null, id, 1]
+      `
+      UPDATE locations
+      SET
+        waterbody = $1,
+        area_name = $2,
+        notes = $3
+      WHERE id = $4
+      AND user_id = $5
+      RETURNING *
+      `,
+      [
+        waterbody.trim(),
+        area_name?.trim() || null,
+        notes?.trim() || null,
+        req.params.id,
+        req.user.id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -92,13 +127,17 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-
     const result = await pool.query(
-      `DELETE FROM locations
-       WHERE id = $1 AND user_id = $2
-       RETURNING *`,
-      [id, 1]
+      `
+      DELETE FROM locations
+      WHERE id = $1
+      AND user_id = $2
+      RETURNING *
+      `,
+      [
+        req.params.id,
+        req.user.id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -110,7 +149,6 @@ router.delete("/:id", async (req, res) => {
 
     res.json({
       status: "ok",
-      message: "Location deleted",
       location: result.rows[0]
     });
   } catch (error) {
